@@ -1,15 +1,10 @@
 package com.firebase.androidchat;
 
 import android.app.ListActivity;
-import android.content.SharedPreferences;
 import android.database.DataSetObserver;
 import android.os.Bundle;
-import android.view.KeyEvent;
-import android.view.View;
-import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.firebase.client.AuthData;
@@ -17,26 +12,34 @@ import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
-
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Random;
+import com.firebase.client.snapshot.Node;
 
 public class MainActivity extends ListActivity {
 
     // TODO: change this to your own Firebase URL
     private static final String FIREBASE_URL = "https://blistering-inferno-1333.firebaseIO.com";
 
-    private Person mUser;
+    private static Person mUser;
     private Firebase mFirebaseRef, currUser;
     private ValueEventListener mConnectedListener;
-    private ChatListAdapter mChatListAdapter;
+    private PersonListAdapter mPersonListAdapter;
     private void auth(String email, String password) {
+        final String u = email;
         mFirebaseRef.authWithPassword(email, password, new Firebase.AuthResultHandler() {
             @Override
             public void onAuthenticated(AuthData authData) {
-                mUser = new Person(authData.getUid());
-                currUser = mFirebaseRef.child(mUser.getName());
+                currUser = mFirebaseRef.child(u);
+                currUser.addValueEventListener(new ValueEventListener() {
+                    @Override
+                    public void onDataChange(DataSnapshot dataSnapshot) {
+                        mUser = dataSnapshot.getValue(Person.class);
+                    }
+
+                    @Override
+                    public void onCancelled(FirebaseError firebaseError) {
+
+                    }
+                });
                 /*
                     TODO: Switch to the main screen of friends, replace activity_main
                  */
@@ -49,12 +52,12 @@ public class MainActivity extends ListActivity {
             }
         });
     }
-    private void newUser(String email, String password) {
-        final String r = email;
+    public void newUser(String email, String password) {
+        final String u = email, p = password;
         mFirebaseRef.createUser(email, password, new Firebase.ResultHandler() {
             @Override
             public void onSuccess() {
-                mUser = new Person(r);
+                auth(u, p);
             }
 
             @Override
@@ -63,20 +66,47 @@ public class MainActivity extends ListActivity {
             }
         });
     }
-    private void newTransaction(String toUser, String amount, String principal, String text) {
+    public void newTransaction(Debt debt, boolean currIsDebtor) {
         /*
             TODO: Check validity of identifying person thru constructor.
          */
-        Person toPerson = new Person(toUser);
-        float a = Float.parseFloat(amount);
-        float p = Float.parseFloat(principal);
-        Debt d = new Debt(mUser, toPerson, a, p, text);
-        toPerson.addDebt(d);
-        mUser.addLoan(d);
+        Person p;
+        if(currIsDebtor) {
+            mUser.addDebt(debt);
+            p = debt.getCreditor();
+            p.addLoan(debt);
 
+        } else {
+            mUser.addLoan(debt);
+            p = debt.getDebitor();
+            p.addDebt(debt);
+        }
+        updatePerson(mUser);
+        updatePerson(p);
+    }
+    public void deleteTransaction(Debt debt) {
+        if(mUser.equals(debt.getCreditor())) {
+            Person p = debt.getDebitor();
+            p.deleteDebt(debt);
+            mUser.deleteLoan(debt);
+            updatePerson(p);
+            updatePerson(mUser);
+        }
     }
     public void updatePerson(Person p) {
         mFirebaseRef.child(p.getName()).updateChildren(p.map());
+    }
+
+    public void updateFriends(Person friend, boolean isAdding) {
+        if(isAdding) {
+            mUser.addFriend(friend);
+            friend.addFriend(mUser);
+        } else {
+            mUser.removeFriend(friend);
+            friend.removeFriend(mUser);
+        }
+        updatePerson(mUser);
+        updatePerson(friend);
     }
 
     @Override
@@ -91,39 +121,7 @@ public class MainActivity extends ListActivity {
 
         // Setup our Firebase mFirebaseRef
         mFirebaseRef = new Firebase(FIREBASE_URL).child("debtswithfriends");
-        /*
-            TODO: Link the right EditTexts to the right objects
-            Get EditText objects from design
-         */
-        EditText email = (EditText) findViewById(R.id.email);
-        EditText password = (EditText) findViewById(R.id.password);
 
-        /* TODO: Define the button and the method associated with clicking it.
-         */
-        button.onclick(function {
-            auth(email.getText().toString(), password.getText().toString());
-
-        })
-        /*
-            TODO: Define a button to start a new loan/debt
-         */
-        button.onclick(function {
-            /*
-            TODO: Redirect to new transaction screen
-             */
-            setContentView(R.layout.activity_main);
-            EditText toUser = (EditText) findViewById(R.id.toUser);
-            EditText amount = (EditText) findViewById(R.id.amount);
-            EditText interest = (EditText) findViewById(R.id.interest);
-            EditText text = (EditText) findViewById(R.id.text);
-            /*
-                TODO: Button to send the transaction.
-             */
-            button.onclick(function {
-                newTransaction(toUser.getText().toString(), amount.getText().toString(),
-                        interest.getText().toString(), text.getText().toString());
-            })
-        })
 
     }
 
@@ -133,13 +131,13 @@ public class MainActivity extends ListActivity {
         // Setup our view and list adapter. Ensure it scrolls to the bottom as data changes
         final ListView listView = getListView();
         // Tell our list adapter that we only want 50 messages at a time
-        mChatListAdapter = new ChatListAdapter(mFirebaseRef.limit(50), this, R.layout.chat_message, mUsername);
-        listView.setAdapter(mChatListAdapter);
-        mChatListAdapter.registerDataSetObserver(new DataSetObserver() {
+        mPersonListAdapter = new PersonListAdapter(mFirebaseRef.limit(50), this, R.layout.chat_message, mUser);
+        listView.setAdapter(mPersonListAdapter);
+        mPersonListAdapter.registerDataSetObserver(new DataSetObserver() {
             @Override
             public void onChanged() {
                 super.onChanged();
-                listView.setSelection(mChatListAdapter.getCount() - 1);
+                listView.setSelection(mPersonListAdapter.getCount() - 1);
             }
         });
 
@@ -166,9 +164,9 @@ public class MainActivity extends ListActivity {
     public void onStop() {
         super.onStop();
         mFirebaseRef.getRoot().child(".info/connected").removeEventListener(mConnectedListener);
-        mChatListAdapter.cleanup();
+        mPersonListAdapter.cleanup();
     }
     public String getUser() {
-        return "";
+        return mUser.getName();
     }
 }

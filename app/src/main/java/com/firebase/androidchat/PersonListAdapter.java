@@ -14,12 +14,12 @@ import com.firebase.client.Query;
  * This class is an example of how to use FirebaseListAdapter. It uses the <code>Chat</code> class to encapsulate the
  * data for each individual chat message
  */
-public class ChatListAdapter extends FirebaseListAdapter<Person> {
+public class PersonListAdapter extends FirebaseListAdapter<Person> {
 
     // The mUsername for this client. We use this to indicate which messages originated from this user
-    private String mUsername;
+    private Person mUsername;
 
-    public ChatListAdapter(Query ref, Activity activity, int layout, String mUsername) {
+    public PersonListAdapter(Query ref, Activity activity, int layout, Person mUsername) {
         super(ref, Person.class, layout, activity);
         this.mUsername = mUsername;
     }

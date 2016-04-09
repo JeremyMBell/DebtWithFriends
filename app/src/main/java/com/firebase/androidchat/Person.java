@@ -36,6 +36,9 @@ public class Person
 		if (!friends.contains(friend))
 			friends.add(friend);
 	}
+	void removeFriend(Person friend) {
+		friends.remove(friend);
+	}
 
 	void addLoan(Debt loan)
 	{
