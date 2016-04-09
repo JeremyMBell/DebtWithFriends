@@ -35,15 +35,15 @@ public class ChatListAdapter extends FirebaseListAdapter<Person> {
     @Override
     protected void populateView(View view, Person chat) {
         // Map a Chat object to an entry in our listview
-        String personScore = "" + chat.getScore();
+        String personName = "" + chat.getName();
         TextView authorText = (TextView) view.findViewById(R.id.author);
-        authorText.setText(author + ": ");
+        authorText.setText(personName + ": ");
         // If the message was sent by this user, color it differently
-        if (author != null && author.equals(mUsername)) {
+        if (personName != null && personName.equals(mUsername)) {
             authorText.setTextColor(Color.RED);
         } else {
             authorText.setTextColor(Color.BLUE);
         }
-        ((TextView) view.findViewById(R.id.message)).setText(chat.getMessage());
+        ((TextView) view.findViewById(R.id.message)).setText(chat.getScore());
     }
 }

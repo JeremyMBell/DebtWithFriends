@@ -1,8 +1,9 @@
 package com.firebase.androidchat;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.Scanner;
-
+import java.util.HashMap;
 public class Person
 {
 	@SuppressWarnings("unused")
@@ -10,19 +11,16 @@ public class Person
 	private ArrayList<Person> friends;
 	private ArrayList<Debt> debts;
 	private ArrayList<Debt> loans;
-	private String password;
-	private long time;
+	private final long time;
 
-	Person(String nm, String pw)
+	Person(String nm)
 	{
 		name = nm;
-		password = pw;
 		friends = new ArrayList<Person>();
 		debts = new ArrayList<Debt>();
 		loans = new ArrayList<Debt>();
 		time = System.currentTimeMillis();
 	}
-
 	String getName()
 	{
 		return name;
@@ -51,28 +49,6 @@ public class Person
 			debts.add(debt);
 	}
 
-	@SuppressWarnings("resource")
-	boolean changePassword()
-	{
-		System.out.println("Please enter your old password: ");
-		Scanner scan = new Scanner(System.in);
-		String temp = scan.next();
-
-		if (!temp.equals(password))
-			return false;
-
-		System.out.println("Please enter your new password: ");
-		String temp1 = scan.next();
-		System.out.println("Please re-enter your new password: ");
-		String temp2 = scan.next();
-
-		if (!temp1.equals(temp2))
-			return false;
-
-		scan.close();
-		password = temp1;
-		return true;
-	}
 
 	int getScore()
 	{
@@ -131,5 +107,14 @@ public class Person
 	boolean equals(Person p)
 	{
 		return (p.name.equals(name) && p.time == time);
+	}
+	Map<String, Object> map() {
+		Map<String, Object> map = new HashMap<String, Object>();
+		map.put("name", name);
+		map.put("friends", friends);
+		map.put("debts", debts);
+		map.put("loans", loans);
+		map.put("time", time);
+		return map;
 	}
 }

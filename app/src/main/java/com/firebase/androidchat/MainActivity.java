@@ -12,11 +12,14 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.firebase.client.AuthData;
 import com.firebase.client.DataSnapshot;
 import com.firebase.client.Firebase;
 import com.firebase.client.FirebaseError;
 import com.firebase.client.ValueEventListener;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class MainActivity extends ListActivity {
@@ -24,42 +27,103 @@ public class MainActivity extends ListActivity {
     // TODO: change this to your own Firebase URL
     private static final String FIREBASE_URL = "https://blistering-inferno-1333.firebaseIO.com";
 
-    private String mUsername;
-    private Firebase mFirebaseRef;
+    private Person mUser;
+    private Firebase mFirebaseRef, currUser;
     private ValueEventListener mConnectedListener;
     private ChatListAdapter mChatListAdapter;
+    private void auth(String email, String password) {
+        mFirebaseRef.authWithPassword(email, password, new Firebase.AuthResultHandler() {
+            @Override
+            public void onAuthenticated(AuthData authData) {
+                mUser = new Person(authData.getUid());
+                currUser = mFirebaseRef.child(mUser.getName());
+                /*
+                    TODO: Switch to the main screen of friends, replace activity_main
+                 */
+                setContentView(R.layout.activity_main);
+            }
+
+            @Override
+            public void onAuthenticationError(FirebaseError firebaseError) {
+                // there was an error
+            }
+        });
+    }
+    private void newUser(String email, String password) {
+        final String r = email;
+        mFirebaseRef.createUser(email, password, new Firebase.ResultHandler() {
+            @Override
+            public void onSuccess() {
+                mUser = new Person(r);
+            }
+
+            @Override
+            public void onError(FirebaseError firebaseError) {
+
+            }
+        });
+    }
+    private void newTransaction(String toUser, String amount, String principal, String text) {
+        /*
+            TODO: Check validity of identifying person thru constructor.
+         */
+        Person toPerson = new Person(toUser);
+        float a = Float.parseFloat(amount);
+        float p = Float.parseFloat(principal);
+        Debt d = new Debt(mUser, toPerson, a, p, text);
+        toPerson.addDebt(d);
+        mUser.addLoan(d);
+
+    }
+    public void updatePerson(Person p) {
+        mFirebaseRef.child(p.getName()).updateChildren(p.map());
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        /* TODO:
+            On create,
+            have user login screen instead of activity_main
+         */
         setContentView(R.layout.activity_main);
 
-        // Make sure we have a mUsername
-        setupUsername();
-
-        setTitle("Chatting as " + mUsername);
-
         // Setup our Firebase mFirebaseRef
-        mFirebaseRef = new Firebase(FIREBASE_URL).child("chat");
+        mFirebaseRef = new Firebase(FIREBASE_URL).child("debtswithfriends");
+        /*
+            TODO: Link the right EditTexts to the right objects
+            Get EditText objects from design
+         */
+        EditText email = (EditText) findViewById(R.id.email);
+        EditText password = (EditText) findViewById(R.id.password);
 
-        // Setup our input methods. Enter key on the keyboard or pushing the send button
-        EditText inputText = (EditText) findViewById(R.id.messageInput);
-        inputText.setOnEditorActionListener(new TextView.OnEditorActionListener() {
-            @Override
-            public boolean onEditorAction(TextView textView, int actionId, KeyEvent keyEvent) {
-                if (actionId == EditorInfo.IME_NULL && keyEvent.getAction() == KeyEvent.ACTION_DOWN) {
-                    sendMessage();
-                }
-                return true;
-            }
-        });
+        /* TODO: Define the button and the method associated with clicking it.
+         */
+        button.onclick(function {
+            auth(email.getText().toString(), password.getText().toString());
 
-        findViewById(R.id.sendButton).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                sendMessage();
-            }
-        });
+        })
+        /*
+            TODO: Define a button to start a new loan/debt
+         */
+        button.onclick(function {
+            /*
+            TODO: Redirect to new transaction screen
+             */
+            setContentView(R.layout.activity_main);
+            EditText toUser = (EditText) findViewById(R.id.toUser);
+            EditText amount = (EditText) findViewById(R.id.amount);
+            EditText interest = (EditText) findViewById(R.id.interest);
+            EditText text = (EditText) findViewById(R.id.text);
+            /*
+                TODO: Button to send the transaction.
+             */
+            button.onclick(function {
+                newTransaction(toUser.getText().toString(), amount.getText().toString(),
+                        interest.getText().toString(), text.getText().toString());
+            })
+        })
 
     }
 
@@ -104,27 +168,7 @@ public class MainActivity extends ListActivity {
         mFirebaseRef.getRoot().child(".info/connected").removeEventListener(mConnectedListener);
         mChatListAdapter.cleanup();
     }
-
-    private void setupUsername() {
-        SharedPreferences prefs = getApplication().getSharedPreferences("ChatPrefs", 0);
-        mUsername = prefs.getString("username", null);
-        if (mUsername == null) {
-            Random r = new Random();
-            // Assign a random user name if we don't have one saved.
-            mUsername = "JavaUser" + r.nextInt(100000);
-            prefs.edit().putString("username", mUsername).commit();
-        }
-    }
-
-    private void sendMessage() {
-        EditText inputText = (EditText) findViewById(R.id.messageInput);
-        String input = inputText.getText().toString();
-        if (!input.equals("")) {
-            // Create our 'model', a Chat object
-            Chat chat = new Chat(input, mUsername);
-            // Create a new, auto-generated child of that chat location, and save our chat data there
-            mFirebaseRef.push().setValue(chat);
-            inputText.setText("");
-        }
+    public String getUser() {
+        return "";
     }
 }

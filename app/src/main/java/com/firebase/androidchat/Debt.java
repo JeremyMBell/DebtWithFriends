@@ -6,7 +6,7 @@ public class Debt
 	private Person debitor;
 	private float principal;
 	private float rate;
-	private long date;
+	private final long date;
 	private String note;
 	@SuppressWarnings("unused")
 	private boolean open;
