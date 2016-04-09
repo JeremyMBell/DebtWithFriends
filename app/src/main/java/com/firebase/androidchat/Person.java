@@ -21,6 +21,11 @@ public class Person
 		time = System.currentTimeMillis();
 	}
 
+	String getName()
+	{
+		return name;
+	}
+
 	void changeName(String nm)
 	{
 		name = nm;
@@ -119,5 +124,10 @@ public class Person
 	void getPoked()
 	{
 
+	}
+
+	boolean equals(Person p)
+	{
+		return (p.name.equals(name) && p.time == time);
 	}
 }
