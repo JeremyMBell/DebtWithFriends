@@ -56,17 +56,21 @@ public class Debt
 
 	float getCurrent()
 	{
-		return principal * (1 + rate);
+		if (date + 2628000000L > System.currentTimeMillis())
+			return principal;
+		else
+			return (principal * (1 + rate) * (System.currentTimeMillis() - date)
+					/ 2628000000);
 	}
 
 	void clear()
 	{
 		open = false;
 
-		if (!(date + 2628000000L < System.currentTimeMillis()))
+		if (date + 2628000000L > System.currentTimeMillis())
 			ontime = true;
 	}
-	
+
 	boolean getontime()
 	{
 		return ontime;

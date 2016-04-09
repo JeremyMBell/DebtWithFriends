@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.HashMap;
+
 public class Person
 {
 	@SuppressWarnings("unused")
@@ -21,6 +22,7 @@ public class Person
 		loans = new ArrayList<Debt>();
 		time = System.currentTimeMillis();
 	}
+
 	String getName()
 	{
 		return name;
@@ -36,7 +38,9 @@ public class Person
 		if (!friends.contains(friend))
 			friends.add(friend);
 	}
-	void removeFriend(Person friend) {
+
+	void removeFriend(Person friend)
+	{
 		friends.remove(friend);
 	}
 
@@ -51,7 +55,6 @@ public class Person
 		if (!debts.contains(debt))
 			debts.add(debt);
 	}
-
 
 	int getScore()
 	{
@@ -111,7 +114,9 @@ public class Person
 	{
 		return (p.name.equals(name) && p.time == time);
 	}
-	Map<String, Object> map() {
+
+	Map<String, Object> map()
+	{
 		Map<String, Object> map = new HashMap<String, Object>();
 		map.put("name", name);
 		map.put("friends", friends);
