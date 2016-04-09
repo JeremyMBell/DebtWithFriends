@@ -1,3 +1,4 @@
+package com.firebase.androidchat;
 
 public class Debt
 {
