@@ -15,7 +15,9 @@ import com.firebase.client.ValueEventListener;
 import com.firebase.client.snapshot.Node;
 
 public class MainActivity extends ListActivity {
+    public MainActivity() {
 
+    }
     // TODO: change this to your own Firebase URL
     private static final String FIREBASE_URL = "https://blistering-inferno-1333.firebaseIO.com";
 
